@@ -1,0 +1,142 @@
+#----------- 1. INSTALAR LIBRERÍAS -----------
+
+#Forma 1
+# Se usa el siguiente comando, entre paréntesis el nombre del paquete:
+# install.packages("dplyr")
+# install.packages("titanic") #Para la base de datos de la práctica
+# install.packages("skimr") #Para la función skim()
+
+
+#Forma 2
+#En Packages > Install
+
+#----------- 2. CARGAR LIBRERÍAS -----------
+
+library(dplyr)
+library(titanic)
+library(skimr)
+
+#----------- 3. CARGAR BASE DE DATOS  -----------
+
+Datos <- titanic_train
+
+#----------- 4. PREPARACIÓN Y LIMPIEZA DE DATOS  -----------
+
+# 4.1. VISUALIZAR LA BASE DE DATOS
+head(Datos, 10) #Las primeras 10 observaciones de la base de datos
+tail(Datos, 10) #Las últimas 10 observaciones de la base de datos
+View(Datos) #Toda la base de de datos
+
+# 4.2. ELIMINAR VARIABLES
+# 4.2.1. PARA ELIMINAR UNA VARIABLE
+#Forma 1
+Datos$Cabin <- NULL
+#Forma 2
+#Datos <- Datos[,-11]  
+
+# 4.2.2. PARA ESCOGER SOLO LAS VARIABLES QUE SE VAN A USAR
+Datos <- Datos %>%
+  select(Survived, Pclass, Sex, Age, Fare)
+
+# 4.3. RENOMBRAR VARIABLES
+Datos<-Datos%>%
+  rename(Sobreviviente=Survived, Clase=Pclass, Sexo=Sex, Edad=Age, Tarifa=Fare)
+
+# 4.4. RECATEGORIZAR VARIABLES
+str(Datos) #Primero se visualizan los tipos de datos
+
+# 4.4.1. RECATEGORIZAR UNA VARIABLE
+Datos$Edad <- as.integer(Datos$Edad)
+
+# 4.4.1. RECATEGORIZAR VARIAS VARIABLES
+#Forma 1
+Factores <- c("Sobreviviente", "Clase", "Sexo")
+Datos[Factores] <- lapply(Datos[Factores], as.factor)
+#Forma 2
+# Datos <- Datos %>%
+#   mutate(Sobreviviente = factor(Sobreviviente),
+#          Clase = factor(Clase),
+#          Sexo = factor(Sexo))
+
+# 4.5. CAMBIAR NOMBRES DE LOS NIVELES DE LOS FACTORES
+levels(Datos$Sobreviviente) #Para mirar los niveles de la variable Sobreviviente
+levels(Datos$Sexo) #Para mirar los niveles de la variable Sexo
+#Forma 1
+Datos <- Datos %>% 
+  mutate(Sobreviviente = recode(Sobreviviente, `1`= "Sí", `0` = "No"))
+Datos <- Datos %>%
+  mutate(Sexo = recode(Sexo, "female" = "Femenino", "male" = "Masculino"))
+
+
+#Forma 2: Solo usar cuando no hay datos faltantes
+# Datos <- Datos %>%
+#   mutate(Sobreviviente = ifelse(Sobreviviente == 1, "Sí", "No"),
+#          Sexo = ifelse(Sexo == "female", "Femenino", "Masculino"))
+
+# 4.6. TRATAMIENTO DE DATOS FALTANTES
+skim(Datos) #Para visualizar los datos faltantes
+Datos <- na.omit(Datos) #Para este caso, se eliminan las observaciones con datos faltantes
+
+#----------- 5. PREGUNTAS  -----------
+
+#PREGUNTA 1: ¿CUÁL ES LA PROPORCIÓN DE CLASES DE LOS PASAJEROS EN EL TITANIC?
+
+# Calcular la proporción pasajeros según clase
+Proporcion <- table(Datos$Clase)
+# Crear un diagrama de torta
+Grafico1 <- pie(Proporcion, 
+                labels = paste(names(Proporcion), ": ", round(Proporcion/sum(Proporcion) * 100, 2), "%"),
+                #paste() es para combinar cadenas de texto
+                col = c("lightblue", "lightgreen", "lightyellow"),
+                main = "Proporción de pasajeros según Clase")
+
+
+#PREGUNTA 2: ¿CÓMO ES LA DISTRIBUCIÓN DE LAS EDADES DE LOS PASAJEROS DEL TITANIC?
+
+# Crear un histograma
+hist(Datos$Edad, 
+     main="Distribución de la variable Edad", 
+     xlab= "Edad", ylab = "Frecuencia",
+     ylim = c(0,400), breaks=10)
+    #ylim da la escala "y"
+    #breaks da el número de barras que tiene el histograma
+
+
+#PREGUNTA 3: ¿CUÁL NÚMERO DE PASAJEROS SOBREVIVIENTES SEGÚN EL SEXO?
+
+# Calcular el número pasajeros sobrevivientes y no sobrevivientes según el sexo
+Proporcion <- table(Datos$Sobreviviente, Datos$Sexo)
+# Crear un diagrama de barras agrupadas
+text(barplot(Proporcion, 
+             main = "Proporción de Sobrevivientes y No Sobrevivientes por Sexo",
+             xlab = "Sexo",
+             ylab = "Número de pasajeros",
+             ylim = c(0,500),
+             col = c("red", "green"),
+             legend = rownames(Proporcion),
+             beside = TRUE),
+     Proporcion,
+     labels = Proporcion,
+     pos = 3,
+     cex = 0.8)
+
+#PREGUNTA 4: ¿HAY ALGUNA RELACIÓN ENTRE LA EDAD Y EL VALOR DE LA TARIFA?
+
+# Crear un diagrama de dispersión
+plot(Datos$Edad, Datos$Tarifa,
+     xlab = "Edad",
+     ylab = "Tarifa",
+     main = "Relación entre Edad y Tarifa",
+     pch = 16,  # Cambia la forma de los puntos por círculos sólidos
+     col = "#007AA2")  # Cambia el color de los puntos a azul
+
+
+#PREGUNTA 5: ¿EXISTE UNA RELACIÓN ENTRE LA CLASE Y LA TARIFA?
+
+# Crear un boxplot
+boxplot(Tarifa ~ Clase, data = Datos,
+        xlab = "Tarifa",
+        ylab = "Clase",
+        main = "Relación entre Clase y Tarifa", 
+        horizontal = TRUE,
+        col = c("lightblue", "lightgreen", "lightyellow"))
