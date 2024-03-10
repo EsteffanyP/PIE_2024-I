@@ -1,0 +1,85 @@
+#----------- 1. INSTALAR LIBRERÍAS -----------
+
+# install.packages("dplyr")
+# install.packages("skimr") #Para la función skim()
+
+#----------- 2. CARGAR LIBRERÍAS -----------
+
+library(dplyr)
+library(skimr)
+
+#----------- 3. CARGAR BASE DE DATOS  -----------
+#Cargamos base de datos desde la web
+Url <- "https://raw.githubusercontent.com/EsteffanyP/PIE_2024-I/main/Datos/DatosTaller6.csv"
+Datos <- read.csv(Url)
+
+#----------- 4. PREPARACIÓN Y LIMPIEZA DE DATOS  -----------
+
+# 4.1. VISUALIZAR LA BASE DE DATOS
+View(Datos) #Toda la base de de datos
+
+# 4.2.SELECCIÓN DE VARIABLES QUE SE VAN A USAR
+Datos <- Datos %>%
+  select(Gender, Salary, GraduationYear, English, Logical, Quant)
+
+# 4.3. RECATEGORIZAR VARIABLES
+str(Datos)
+Datos$Gender <- as.factor(Datos$Gender)
+Datos$GraduationYear <- as.factor(Datos$GraduationYear)
+
+# 4.4. CAMBIAR NOMBRES DE LOS NIVELES DE LOS FACTORES
+Datos <- Datos %>%
+  mutate(Gender = recode(Gender, "f" = "Female", "m" = "Male"))
+
+# 4.5. TRATAMIENTO DE DATOS FALTANTES
+skim(Datos) #Para visualizar los datos faltantes
+#En este caso no hay datos faltantes, entonces no se hace tratamiento
+
+# 4.6. REASIGNAR CATEGORIAS
+summary(Datos) #Para visualizar el resumen de la base de datos
+#Después de mirar los niveles más importantes, se reasignan las categorias
+Datos$GraduationYear<-case_when(Datos$GraduationYear=="2010"~"2010", 
+                                Datos$GraduationYear=="2011"~"2011", 
+                                Datos$GraduationYear=="2012"~"2012", 
+                                Datos$GraduationYear=="2013"~"2013", 
+                                Datos$GraduationYear=="2014"~"2014", 
+                                TRUE~"Other")
+table(Datos$GraduationYear) #Verificar como quedó
+
+# 4.7. ORGANIZAR LOS NIVELES DE LAS VARIABLES ORDINALES
+levels(Datos$GraduationYear) #Para mirar como está el orden de los niveles
+Datos$GraduationYear<-ordered(Datos$GraduationYear,levels=c("2010", "2011", "2012", "2013", "2014", "Other"))
+skim(Datos) #Si se vuelve a mirar ya aparece como ordenado 
+
+#----------- 5. PREGUNTAS  -----------
+# PREGUNTA 1: ¿CUÁL ES EL SALARIO PROMEDIO DE LOS GRADUADOS EN EL AÑO 2013?
+# Filtrar los datos para incluir solo los graduados en el año 2013
+DatosP1 <- filter(Datos, GraduationYear == "2013")
+
+# Calcular el salario promedio
+mean(DatosP1$Salary)
+
+#Hacer un histograma y un boxplot para observar el comportamiento de la variable 
+par(mfrow = c(1, 2)) #Para que aparezcan 2 gráficos a la vez
+hist(DatosP1$Salary, 
+     main="Salario de graduados en 2013", 
+     xlab= "Salario", ylab = "Frecuencia",
+     ylim = c(0,500), col= "blue")
+
+boxplot(DatosP1$Salary, 
+        col="chocolate",
+        main="Salario de graduados en 2013", 
+        xlab="Salario",
+        ylab=NULL, 
+        horizontal = TRUE)
+par(mfrow = c(1, 1)) #Para que aparezca 1 gráfico a la vez
+
+# PREGUNTA 2: ¿CUÁL ES EL PROMEDIO POR GÉNERO DE CADA COMPONENTE DEL EXAMEN (English, Logical, Quant)?
+#Forma 1: Se puede hacer con la función agregate, pero no se recomienda si hay que hacer gráficos
+Promedio <- aggregate(cbind(English, Logical, Quant) ~ Gender, data = Datos, FUN = mean)
+
+# PREGUNTA 3: ¿EXISTE RELACIÓN ENTRE EL SALARIO Y EL PROMEDIO DEL EXAMEN (English, Logical, Quant)?
+#Se crea una nueva variable que contenga el promedio
+Datos$PromedioExamen <- (Datos$English+Datos$Logical+Datos$Quant)/3
+#Se hace un diagrama de dispersión
+plot(Datos$PromedioExamen, Datos$Salary, main = "Relación entre salario y promedio del examen", xlab = "Promedio del examen", ylab = "Salario", col="blue")
