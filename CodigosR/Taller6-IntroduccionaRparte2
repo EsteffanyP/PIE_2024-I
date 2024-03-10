@@ -75,7 +75,6 @@ boxplot(DatosP1$Salary,
 par(mfrow = c(1, 1)) #Para que aparezca 1 gráfico a la vez
 
 # PREGUNTA 2: ¿CUÁL ES EL PROMEDIO POR GÉNERO DE CADA COMPONENTE DEL EXAMEN (English, Logical, Quant)?
-#Forma 1: Se puede hacer con la función agregate, pero no se recomienda si hay que hacer gráficos
 Promedio <- aggregate(cbind(English, Logical, Quant) ~ Gender, data = Datos, FUN = mean)
 
 # PREGUNTA 3: ¿EXISTE RELACIÓN ENTRE EL SALARIO Y EL PROMEDIO DEL EXAMEN (English, Logical, Quant)?
